@@ -1,10 +1,10 @@
-# Sistema de Pedidos - Academia Veiga
+# Sistema de Pedidos - Veiga Team
 
-Sistema completo para gerenciamento de pedidos de produtos da academia, incluindo camisetas, shorts e equipamentos.
+Sistema completo para gerenciamento de pedidos de produtos da Veiga Team, incluindo camisetas, shorts e equipamentos.
 
 ## 🚀 Funcionalidades
 
-### Para Alunos (Formulário Público)
+### Para Clientes (Formulário Público)
 - ✅ Formulário público para fazer pedidos
 - ✅ Catálogo de produtos com preços
 - ✅ Carrinho de compras
@@ -35,7 +35,8 @@ Sistema completo para gerenciamento de pedidos de produtos da academia, incluind
 
 1. **Clone o repositório**
 ```bash
-cd /home/rodrigo.veiga/Documentos/Veiga/pedidos
+git clone git@github.com:VeigaTeam/pedidos.git
+cd pedidos
 ```
 
 2. **Instale as dependências**
@@ -63,13 +64,13 @@ psql -d sua_database -f database/schema.sql
 
 ### Tabelas Principais
 - `products` - Catálogo de produtos
-- `orders` - Pedidos dos alunos
+- `orders` - Pedidos dos clientes
 - `order_items` - Itens dos pedidos
 - `inventory_alerts` - Alertas de estoque
 
 ## 📱 Uso do Sistema
 
-### Formulário Público (Alunos)
+### Formulário Público (Clientes)
 1. Acesse a página inicial
 2. Navegue pelos produtos disponíveis
 3. Selecione tamanhos e cores
@@ -109,7 +110,7 @@ VITE_DATABASE_URL=postgresql://user:password@localhost:5432/pedidos_db
 - Cálculo automático de margem de lucro
 
 ### Sistema de Pedidos
-- Formulário público para alunos
+- Formulário público para clientes
 - Carrinho de compras
 - Status de pedidos (pendente, confirmado, etc.)
 - Exportação para WhatsApp
@@ -178,9 +179,9 @@ Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes
 ## 📞 Suporte
 
 Para dúvidas ou suporte, entre em contato:
-- Email: contato@academiaveiga.com
+- Email: contato@veigateam.com
 - WhatsApp: (11) 99999-9999
 
 ---
 
-**Desenvolvido para Academia Veiga** 🥊
+**Desenvolvido para Veiga Team** 🥊
