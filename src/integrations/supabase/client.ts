@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from './types'
 
-// Validação de variáveis de ambiente
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Validação de variáveis de ambiente com fallback para produção
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://eglxlvzkrfjhfexipudj.supabase.co'
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnbHhsdnprcmZqaGZleGlwdWRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxMDE5OTUsImV4cCI6MjA2NzY3Nzk5NX0.NGSXF3dun82LWXlT8HdgLH_jBfhGJFH-m19y5SwiebQ'
 
 if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   throw new Error(
