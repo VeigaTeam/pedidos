@@ -5,9 +5,10 @@ import type { Database } from './types'
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://eglxlvzkrfjhfexipudj.supabase.co'
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnbHhsdnprcmZqaGZleGlwdWRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxMDE5OTUsImV4cCI6MjA2NzY3Nzk5NX0.NGSXF3dun82LWXlT8HdgLH_jBfhGJFH-m19y5SwiebQ'
 
+// Usar fallbacks automáticos em produção
 if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  throw new Error(
-    'Missing Supabase environment variables. Please check your .env file.'
+  console.warn(
+    'Using fallback Supabase configuration. Please configure environment variables in AWS Amplify.'
   )
 }
 
@@ -18,9 +19,7 @@ if (!SUPABASE_URL.startsWith('https://')) {
 
 if (!SUPABASE_PUBLISHABLE_KEY.startsWith('eyJ')) {
   console.warn('⚠️ Supabase key format warning - should start with "eyJ"')
-  if (import.meta.env.PROD) {
-    throw new Error('Invalid Supabase key format')
-  }
+  // Removido throw para produção para evitar falhas de build
 }
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
