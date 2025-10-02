@@ -6,13 +6,21 @@ import { ThemeProvider } from "@/contexts/ThemeContext"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ProtectedRoute } from "@/components/Auth/ProtectedRoute"
 import { Layout } from "@/components/Layout/Layout"
+import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { backupService } from "@/lib/backupService"
 
 // Pages
 import PublicOrderForm from "./pages/PublicOrderForm"
 import AdminDashboard from "./pages/AdminDashboard"
 import ProductsManagement from "./pages/ProductsManagement"
+import BrandsManagement from "./pages/BrandsManagement"
+import SuppliersManagement from "./pages/SuppliersManagement"
+import { SupplierOrdersManagement } from "./pages/SupplierOrdersManagement"
+import CategoriesManagement from "./pages/CategoriesManagement"
+import PromotionsManagement from "./pages/PromotionsManagement"
+import PreSaleManagement from "./pages/PreSaleManagement"
 import OrdersManagement from "./pages/OrdersManagement"
+import PaymentManagement from "./pages/PaymentManagement"
 import SalesMetrics from "./pages/SalesMetrics"
 import InventoryManagement from "./pages/InventoryManagement"
 import BackupManagement from "./pages/BackupManagement"
@@ -45,33 +53,42 @@ function App() {
   }, [])
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AuthProvider>
-          <Toaster />
-          <BrowserRouter>
-            <Routes>
-              {/* Rota pública para formulário de pedidos */}
-              <Route path="/" element={<PublicOrderForm />} />
-              
-              {/* Rotas administrativas protegidas */}
-              <Route path="/admin" element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }>
-                <Route index element={<AdminDashboard />} />
-                <Route path="products" element={<ProductsManagement />} />
-                <Route path="orders" element={<OrdersManagement />} />
-                <Route path="metrics" element={<SalesMetrics />} />
-                <Route path="inventory" element={<InventoryManagement />} />
-                <Route path="backup" element={<BackupManagement />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <AuthProvider>
+            <Toaster />
+            <BrowserRouter basename="/pedidos">
+              <Routes>
+                {/* Rota pública para formulário de pedidos */}
+                <Route path="/" element={<PublicOrderForm />} />
+                
+                {/* Rotas administrativas protegidas */}
+                <Route path="/admin" element={
+                  <ProtectedRoute>
+                    <Layout />
+                  </ProtectedRoute>
+                }>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="products" element={<ProductsManagement />} />
+                  <Route path="brands" element={<BrandsManagement />} />
+                  <Route path="suppliers" element={<SuppliersManagement />} />
+                  <Route path="supplier-orders" element={<SupplierOrdersManagement />} />
+                  <Route path="categories" element={<CategoriesManagement />} />
+                  <Route path="promotions" element={<PromotionsManagement />} />
+                  <Route path="pre-sale" element={<PreSaleManagement />} />
+                  <Route path="orders" element={<OrdersManagement />} />
+                  <Route path="payments" element={<PaymentManagement />} />
+                  <Route path="metrics" element={<SalesMetrics />} />
+                  <Route path="inventory" element={<InventoryManagement />} />
+                  <Route path="backup" element={<BackupManagement />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   )
 }
 

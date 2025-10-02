@@ -15,7 +15,7 @@ export const Header: React.FC = () => {
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center space-x-4">
           <img 
-            src="/logo.png" 
+            src="/pedidos/logo.png" 
             alt="CT VEIGA TEAM" 
             className="w-8 h-8 object-contain"
           />

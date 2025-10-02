@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { emailService } from '@/lib/emailService'
-import type { Order, OrderItem } from '@/types'
+import type { Order } from '@/types'
 
 export const useOrders = () => {
   const [orders, setOrders] = useState<Order[]>([])
@@ -56,6 +56,8 @@ export const useOrders = () => {
             colors: item.products.colors,
             image: item.products.image_url,
             isActive: item.products.is_active,
+            isOffer: item.products.is_offer || false,
+            offerPrice: item.products.offer_price || undefined,
             createdAt: new Date(item.products.created_at),
             updatedAt: new Date(item.products.updated_at)
           },
@@ -145,10 +147,30 @@ export const useOrders = () => {
         }
         
         // Enviar email para admin
-        await emailService.sendNewOrderNotification(orderForEmail)
+        await emailService.sendNewOrderNotification({
+          ...orderForEmail,
+          items: orderData.items.map(item => ({
+            name: item.productId, // Usar productId como name temporariamente
+            quantity: item.quantity,
+            size: item.size,
+            color: item.color,
+            unitPrice: item.unitPrice,
+            totalPrice: item.totalPrice
+          }))
+        })
         
         // Enviar email de confirmação para o cliente
-        await emailService.sendOrderConfirmation(orderForEmail)
+        await emailService.sendOrderConfirmation({
+          ...orderForEmail,
+          items: orderData.items.map(item => ({
+            name: item.productId, // Usar productId como name temporariamente
+            quantity: item.quantity,
+            size: item.size,
+            color: item.color,
+            unitPrice: item.unitPrice,
+            totalPrice: item.totalPrice
+          }))
+        })
       } catch (emailError) {
         console.error('Erro ao enviar emails:', emailError)
         // Não falhar o pedido por erro de email

@@ -72,7 +72,7 @@ export const validateSecureConnection = async () => {
       throw new Error('HTTPS required for production')
     }
     
-    const { data, error } = await supabase.auth.getSession()
+    const { error } = await supabase.auth.getSession()
     if (error) {
       throw error
     }

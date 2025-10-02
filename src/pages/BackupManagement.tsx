@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { backupService, type BackupData } from '@/lib/backupService'
+import { backupService } from '@/lib/backupService'
 import { useToast } from '@/hooks/use-toast'
 import { 
   Database, 
@@ -19,8 +19,8 @@ import {
 } from 'lucide-react'
 
 export default function BackupManagement() {
-  const [localBackups, setLocalBackups] = useState<BackupData[]>([])
-  const [databaseBackups, setDatabaseBackups] = useState<BackupData[]>([])
+  const [localBackups, setLocalBackups] = useState<any[]>([])
+  const [databaseBackups, setDatabaseBackups] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [backupInterval, setBackupInterval] = useState(24)
   const [isAutomaticBackup, setIsAutomaticBackup] = useState(false)
@@ -90,7 +90,7 @@ export default function BackupManagement() {
     }
   }
 
-  const restoreBackup = async (backup: BackupData) => {
+  const restoreBackup = async (backup: any) => {
     if (!confirm(`Tem certeza que deseja restaurar o backup de ${new Date(backup.timestamp).toLocaleString('pt-BR')}? Esta ação irá sobrescrever os dados atuais.`)) {
       return
     }
@@ -124,7 +124,7 @@ export default function BackupManagement() {
     }
   }
 
-  const downloadBackup = (backup: BackupData) => {
+  const downloadBackup = (backup: any) => {
     try {
       const dataStr = JSON.stringify(backup, null, 2)
       const dataBlob = new Blob([dataStr], { type: 'application/json' })
@@ -217,12 +217,12 @@ export default function BackupManagement() {
     return new Date(timestamp).toLocaleString('pt-BR')
   }
 
-  const formatSize = (backup: BackupData) => {
+  const formatSize = (backup: any) => {
     const size = JSON.stringify(backup).length
     return `${(size / 1024).toFixed(2)} KB`
   }
 
-  const getBackupSummary = (backup: BackupData) => {
+  const getBackupSummary = (backup: any) => {
     return `${backup.products.length} produtos, ${backup.orders.length} pedidos, ${backup.orderItems.length} itens`
   }
 

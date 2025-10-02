@@ -91,22 +91,24 @@ export class BackupService {
     }
   }
 
-  private async saveBackupToDatabase(backupData: BackupData) {
+  private async saveBackupToDatabase(_backupData: BackupData) {
     try {
       // Criar tabela de backups se não existir
       await this.createBackupTableIfNotExists()
 
-      const { error } = await supabase
-        .from('system_backups')
-        .insert({
-          backup_data: backupData,
-          created_at: new Date().toISOString(),
-          backup_type: 'automatic',
-          size_bytes: JSON.stringify(backupData).length
-        })
+      // Temporariamente desabilitado - tabela system_backups não existe
+      console.log('🗄️ Backup salvo localmente (sistema de backup em desenvolvimento)')
+      // const { error } = await supabase
+      //   .from('system_backups')
+      //   .insert({
+      //     backup_data: backupData,
+      //     created_at: new Date().toISOString(),
+      //     backup_type: 'automatic',
+      //     size_bytes: JSON.stringify(backupData).length
+      //   })
 
-      if (error) throw error
-      console.log('🗄️ Backup salvo no banco de dados')
+      // if (error) throw error
+      // console.log('🗄️ Backup salvo no banco de dados')
 
     } catch (error) {
       console.error('Erro ao salvar backup no banco:', error)
@@ -115,14 +117,16 @@ export class BackupService {
   }
 
   private async createBackupTableIfNotExists() {
-    try {
-      const { error } = await supabase.rpc('create_backup_table_if_not_exists')
-      if (error && !error.message.includes('already exists')) {
-        console.warn('Aviso: Não foi possível criar tabela de backups:', error.message)
-      }
-    } catch (error) {
-      console.warn('Aviso: Função de criação de tabela não disponível')
-    }
+    // Temporariamente desabilitado
+    console.log('Sistema de backup em desenvolvimento')
+    // try {
+    //   const { error } = await supabase.rpc('create_backup_table_if_not_exists')
+    //   if (error && !error.message.includes('already exists')) {
+    //     console.warn('Aviso: Não foi possível criar tabela de backups:', error.message)
+    //   }
+    // } catch (error) {
+    //   console.warn('Aviso: Função de criação de tabela não disponível')
+    // }
   }
 
   private async sendBackupByEmail(backupData: BackupData) {
@@ -332,14 +336,17 @@ export class BackupService {
 
   async getDatabaseBackups(): Promise<BackupData[]> {
     try {
-      const { data, error } = await supabase
-        .from('system_backups')
-        .select('backup_data, created_at')
-        .order('created_at', { ascending: false })
-        .limit(10)
+      // Temporariamente desabilitado
+      console.log('Sistema de backup em desenvolvimento')
+      return []
+      // const { data, error } = await supabase
+      //   .from('system_backups')
+      //   .select('backup_data, created_at')
+      //   .order('created_at', { ascending: false })
+      //   .limit(10)
 
-      if (error) throw error
-      return data?.map(item => item.backup_data) || []
+      // if (error) throw error
+      // return data?.map(item => item.backup_data) || []
     } catch (error) {
       console.error('Erro ao obter backups do banco:', error)
       return []

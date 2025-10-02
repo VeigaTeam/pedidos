@@ -1,11 +1,39 @@
 -- Schema do banco de dados para Sistema de Pedidos da Academia
 
+-- Tabela de fornecedores
+CREATE TABLE suppliers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    contact_name VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(20),
+    cnpj VARCHAR(18),
+    address TEXT,
+    notes TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela de marcas
+CREATE TABLE brands (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    supplier_id UUID REFERENCES suppliers(id) ON DELETE SET NULL,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Tabela de produtos
 CREATE TABLE products (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     category VARCHAR(50) NOT NULL CHECK (category IN ('camisetas', 'shorts', 'equipamentos')),
     description TEXT,
+    brand_id UUID REFERENCES brands(id) ON DELETE SET NULL,
+    supplier_id UUID REFERENCES suppliers(id) ON DELETE SET NULL,
     purchase_price DECIMAL(10,2) NOT NULL,
     sale_price DECIMAL(10,2) NOT NULL,
     profit_margin DECIMAL(5,2) NOT NULL,
@@ -29,6 +57,7 @@ CREATE TABLE orders (
     student_phone VARCHAR(20) NOT NULL,
     total_amount DECIMAL(10,2) NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'processing', 'completed', 'cancelled')),
+    payment_status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'processing', 'approved', 'rejected', 'cancelled', 'refunded')),
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -58,17 +87,44 @@ CREATE TABLE inventory_alerts (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Tabela de pagamentos
+CREATE TABLE payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    amount DECIMAL(10,2) NOT NULL,
+    method VARCHAR(20) NOT NULL CHECK (method IN ('pix', 'credit_card_manual')),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'approved', 'rejected', 'cancelled', 'refunded')),
+    transaction_id VARCHAR(255),
+    pix_code TEXT,
+    pix_qr_code TEXT,
+    payment_link TEXT,
+    notes TEXT,
+    gateway_response JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Índices para melhor performance
+CREATE INDEX idx_suppliers_active ON suppliers(is_active);
+CREATE INDEX idx_brands_active ON brands(is_active);
+CREATE INDEX idx_brands_supplier ON brands(supplier_id);
 CREATE INDEX idx_products_category ON products(category);
+CREATE INDEX idx_products_brand ON products(brand_id);
+CREATE INDEX idx_products_supplier ON products(supplier_id);
 CREATE INDEX idx_products_active ON products(is_active);
 CREATE INDEX idx_products_stock ON products(stock);
 CREATE INDEX idx_products_offer ON products(is_offer);
 CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_orders_payment_status ON orders(payment_status);
 CREATE INDEX idx_orders_created_at ON orders(created_at);
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_order_items_product_id ON order_items(product_id);
 CREATE INDEX idx_inventory_alerts_product_id ON inventory_alerts(product_id);
 CREATE INDEX idx_inventory_alerts_resolved ON inventory_alerts(is_resolved);
+CREATE INDEX idx_payments_order_id ON payments(order_id);
+CREATE INDEX idx_payments_status ON payments(status);
+CREATE INDEX idx_payments_method ON payments(method);
+CREATE INDEX idx_payments_created_at ON payments(created_at);
 
 -- Trigger para atualizar updated_at automaticamente
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -79,10 +135,19 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+CREATE TRIGGER update_suppliers_updated_at BEFORE UPDATE ON suppliers
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_brands_updated_at BEFORE UPDATE ON brands
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON payments
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Função para calcular margem de lucro automaticamente
@@ -119,11 +184,4 @@ $$ language 'plpgsql';
 CREATE TRIGGER check_stock_alerts_trigger AFTER UPDATE ON products
     FOR EACH ROW EXECUTE FUNCTION check_stock_alerts();
 
--- Inserir dados iniciais
-INSERT INTO products (name, category, description, purchase_price, sale_price, stock, min_stock, sizes, colors) VALUES
-('Camiseta Academia Veiga', 'camisetas', 'Camiseta 100% algodão com logo da academia', 25.00, 45.00, 50, 10, '["P", "M", "G", "GG"]', '["Branco", "Preto", "Vermelho"]'),
-('Short de Treino', 'shorts', 'Short confortável para treinos', 30.00, 55.00, 30, 5, '["P", "M", "G", "GG"]', '["Preto", "Azul", "Cinza"]'),
-('Luvas de Boxe', 'equipamentos', 'Luvas profissionais para boxe e muay thai', 80.00, 150.00, 15, 3, '["12oz", "14oz", "16oz"]', '["Preto", "Vermelho", "Azul"]'),
-('Caneleiras', 'equipamentos', 'Caneleiras para muay thai', 60.00, 120.00, 20, 5, '["P", "M", "G"]', '["Preto", "Azul"]'),
-('Protetor Bucal', 'equipamentos', 'Protetor bucal moldável', 15.00, 35.00, 100, 20, '["Único"]', '["Transparente", "Azul", "Rosa"]'),
-('Bandagem', 'equipamentos', 'Bandagem para mãos - 4.5m', 8.00, 20.00, 200, 50, '["4.5m"]', '["Branco", "Preto", "Azul", "Vermelho"]');
+-- Dados iniciais removidos - adicione seus próprios dados através da interface administrativa

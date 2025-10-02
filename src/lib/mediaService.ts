@@ -21,7 +21,7 @@ export class MediaService {
       const fileName = `${productId}/${type}_${Date.now()}.${fileExt}`
       
       // Upload do arquivo
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from(this.bucketName)
         .upload(fileName, file, {
           cacheControl: '3600',

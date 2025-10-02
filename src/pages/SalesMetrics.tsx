@@ -72,12 +72,12 @@ export default function SalesMetrics() {
     lucro: item.profit
   }))
 
-  const topProductsData = metrics.topProducts.map((item, index) => ({
-    name: item.product.name,
-    vendas: item.quantitySold,
-    receita: item.revenue,
-    fill: `hsl(${index * 60}, 70%, 50%)`
-  }))
+  // const topProductsData = metrics.topProducts.map((item, index) => ({
+  //   name: item.product.name,
+  //   vendas: item.quantitySold,
+  //   receita: item.revenue,
+  //   fill: `hsl(${index * 60}, 70%, 50%)`
+  // }))
 
   const statusData = Object.entries(metrics.ordersByStatus).map(([status, count]) => ({
     name: status === 'pending' ? 'Pendentes' :
