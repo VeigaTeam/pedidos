@@ -3,8 +3,8 @@ frontend:
   phases:
     preBuild:
       commands:
-        - echo "Installing Node.js version 18..."
-        - nvm use 18
+        - echo "Using Node.js version 18..."
+        - node -v
         - echo "Installing dependencies..."
         - npm ci
         - echo "Running type check..."
@@ -13,6 +13,9 @@ frontend:
       commands:
         - echo "Building the React app..."
         - npm run build
+        - echo "Checking build output..."
+        - ls -la dist/
+        - ls -la dist/index.html || echo "index.html not found"
         - echo "Build completed successfully"
   artifacts:
     baseDirectory: dist
@@ -22,3 +25,4 @@ frontend:
     paths:
       - node_modules/**/*
       - .npm/**/*
+      - /tmp/.npm/**/*
