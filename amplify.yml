@@ -1,0 +1,28 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - echo "Using Node.js version 18..."
+        - node -v
+        - echo "Installing dependencies..."
+        - npm ci
+        - echo "Running type check..."
+        - npm run type-check
+    build:
+      commands:
+        - echo "Building the React app..."
+        - npm run build
+        - echo "Checking build output..."
+        - ls -la dist/
+        - ls -la dist/index.html || echo "index.html not found"
+        - echo "Build completed successfully"
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      - .npm/**/*
+      - /tmp/.npm/**/*
