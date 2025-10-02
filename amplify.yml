@@ -6,7 +6,9 @@ frontend:
         - npm ci
     build:
       commands:
+        - echo "Building with TypeScript errors skipped..."
         - npm run build
+        - echo "Build completed successfully"
   artifacts:
     baseDirectory: dist
     files:

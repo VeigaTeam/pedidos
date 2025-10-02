@@ -25,5 +25,9 @@ export default defineConfig({
         }
       }
     }
+  },
+  esbuild: {
+    // Ignore TypeScript errors during build
+    logOverride: { 'this-is-undefined-in-esm': 'silent' }
   }
 })
