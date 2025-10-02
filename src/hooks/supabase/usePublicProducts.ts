@@ -22,14 +22,19 @@ export const usePublicProducts = (filters: ProductFilters) => {
       
       let query = supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          variations:product_variations(*),
+          required_attributes:product_required_attributes(
+            *,
+            attribute:variation_attributes(*)
+          )
+        `)
         .eq('is_active', true)
-        .gt('stock', 0) // Apenas produtos em estoque
-        .order('created_at', { ascending: false })
 
       // Aplicar filtros
       if (filters.category && filters.category !== 'all') {
-        query = query.eq('category', filters.category)
+        query = query.eq('category', filters.category as 'camisetas' | 'shorts' | 'equipamentos')
       }
 
       if (filters.showOffersOnly) {
@@ -61,25 +66,62 @@ export const usePublicProducts = (filters: ProductFilters) => {
       }
 
       // Transformar dados do Supabase para o formato local
-      const transformedProducts: Product[] = data?.map(item => ({
-        id: item.id,
-        name: item.name,
-        category: item.category,
-        description: item.description || undefined,
-        purchasePrice: item.purchase_price,
-        salePrice: item.sale_price,
-        profitMargin: item.profit_margin,
-        stock: item.stock,
-        minStock: item.min_stock,
-        sizes: item.sizes as string[] | undefined,
-        colors: item.colors as string[] | undefined,
-        image: item.image_url || undefined,
-        isActive: item.is_active,
-        isOffer: item.is_offer || false,
-        offerPrice: item.offer_price || undefined,
-        createdAt: new Date(item.created_at),
-        updatedAt: new Date(item.updated_at)
-      })) || []
+      const transformedProducts = data?.map(item => {
+        // Calcular estoque total das variações
+        const variationsStock = item.variations?.reduce((total: number, variation: any) => 
+          total + (variation.stock || 0), 0) || 0
+        
+        return {
+          id: item.id,
+          name: item.name,
+          category: item.category,
+          description: item.description || undefined,
+          purchasePrice: item.purchase_price,
+          salePrice: item.sale_price,
+          profitMargin: item.profit_margin,
+          stock: item.stock,
+          minStock: item.min_stock,
+          sizes: item.sizes as string[] | undefined,
+          colors: item.colors as string[] | undefined,
+          image: item.image_url || undefined,
+          isActive: item.is_active,
+          isOffer: item.is_offer || false,
+          offerPrice: item.offer_price || undefined,
+          createdAt: new Date(item.created_at),
+          updatedAt: new Date(item.updated_at),
+          variations: item.variations?.map((v: any) => ({
+            id: v.id,
+            productId: v.product_id,
+            product: {} as Product,
+            sku: v.sku,
+            attributes: v.attributes || {},
+            attributeValues: [],
+            purchasePrice: v.purchase_price,
+            salePrice: v.sale_price,
+            profitMargin: v.profit_margin || 0,
+            stock: v.stock || 0,
+            minStock: v.min_stock || 0,
+            image: v.image_url,
+            isAvailable: v.is_available,
+            sortOrder: v.sort_order,
+            createdAt: new Date(v.created_at),
+            updatedAt: new Date(v.updated_at)
+          })) || [],
+          requiredAttributes: item.required_attributes?.map((ra: any) => ({
+            id: ra.attribute.id,
+            name: ra.attribute.name,
+            displayName: ra.attribute.display_name,
+            description: ra.attribute.description,
+            dataType: ra.attribute.data_type,
+            isRequired: ra.attribute.is_required,
+            sortOrder: ra.attribute.sort_order,
+            isActive: ra.attribute.is_active,
+            createdAt: new Date(ra.attribute.created_at),
+            updatedAt: new Date(ra.attribute.updated_at)
+          })) || [],
+          totalStock: item.variations?.length > 0 ? variationsStock : item.stock
+        }
+      }) || []
 
       setProducts(transformedProducts)
     } catch (err) {

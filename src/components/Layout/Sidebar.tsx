@@ -7,13 +7,27 @@ import {
   BarChart3, 
   Warehouse,
   Database,
-  Home
+  Home,
+  CreditCard,
+  Building2,
+  Tag,
+  Truck,
+  FolderOpen,
+  Percent,
+  Clock
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Produtos', href: '/admin/products', icon: Package },
+  { name: 'Marcas', href: '/admin/brands', icon: Tag },
+  { name: 'Categorias', href: '/admin/categories', icon: FolderOpen },
+  { name: 'Fornecedores', href: '/admin/suppliers', icon: Building2 },
+  { name: 'Pedidos aos Fornecedores', href: '/admin/supplier-orders', icon: Truck },
+  { name: 'Promoções', href: '/admin/promotions', icon: Percent },
+  { name: 'Pré-venda', href: '/admin/pre-sale', icon: Clock },
   { name: 'Pedidos', href: '/admin/orders', icon: ShoppingCart },
+  { name: 'Pagamentos', href: '/admin/payments', icon: CreditCard },
   { name: 'Métricas', href: '/admin/metrics', icon: BarChart3 },
   { name: 'Estoque', href: '/admin/inventory', icon: Warehouse },
   { name: 'Backup', href: '/admin/backup', icon: Database },
@@ -27,7 +41,7 @@ export const Sidebar: React.FC = () => {
       <div className="flex items-center h-16 px-6 border-b border-sidebar-border">
         <Link to="/" className="flex items-center space-x-2">
           <img 
-            src="/logo.png" 
+            src="/pedidos/logo.png" 
             alt="CT VEIGA TEAM" 
             className="w-6 h-6 object-contain"
           />

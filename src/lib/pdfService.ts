@@ -227,15 +227,15 @@ export class PDFService {
     
     // Top products
     if (metrics.topProducts.length > 0) {
-      const startY = doc.lastAutoTable.finalY + 20
+      const startY = (doc as any).lastAutoTable.finalY + 20
       doc.setFont('helvetica', 'bold')
       doc.text('Produtos Mais Vendidos', 20, startY)
       
       const topProductsData = metrics.topProducts.map((product, index) => [
         (index + 1).toString(),
-        product.name,
+        product.product.name,
         product.quantitySold.toString(),
-        `R$ ${product.totalRevenue.toFixed(2)}`
+        `R$ ${product.revenue.toFixed(2)}`
       ])
       
       doc.autoTable({
@@ -330,7 +330,7 @@ export class PDFService {
     
     // Notes
     if (order.notes) {
-      const startY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 200
+      const startY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 20 : 200
       doc.setFont('helvetica', 'bold')
       doc.text('Observações', 20, startY)
       

@@ -62,7 +62,7 @@ export function LoginForm() {
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
             <img 
-              src="/logo.png" 
+              src="/pedidos/logo.png" 
               alt="CT VEIGA TEAM" 
               className="w-20 h-20 object-contain"
             />

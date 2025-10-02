@@ -8,12 +8,17 @@ import { ShoppingCart, Package, Play, Image as ImageIcon } from 'lucide-react'
 import type { Product } from '@/types'
 
 interface ProductGridProps {
-  products: Product[]
-  onAddToCart: (productId: string, quantity: number, size?: string, color?: string) => void
+  products: (Product & { 
+    variations?: any[], 
+    requiredAttributes?: any[], 
+    totalStock?: number 
+  })[]
+  onAddToCart: (productId: string, quantity: number, size?: string, color?: string, variationId?: string) => void
 }
 
 interface CartItem {
   productId: string
+  variationId?: string
   quantity: number
   size?: string
   color?: string
@@ -49,7 +54,8 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
       product.id,
       cartItem.quantity,
       selectedSizes[product.id],
-      selectedColors[product.id]
+      selectedColors[product.id],
+      cartItem.variationId
     )
 
     // Limpar seleções após adicionar

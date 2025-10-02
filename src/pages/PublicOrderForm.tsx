@@ -10,6 +10,7 @@ import { ShoppingCart, Package } from 'lucide-react'
 
 interface CartItem {
   productId: string
+  variationId?: string
   quantity: number
   size?: string
   color?: string
@@ -28,19 +29,22 @@ export default function PublicOrderForm() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [isCartModalOpen, setIsCartModalOpen] = useState(false)
 
-  const addToCart = (productId: string, quantity: number, size?: string, color?: string) => {
-    const existingItem = cart.find(item => 
-      item.productId === productId && item.size === size && item.color === color
-    )
+  const addToCart = (productId: string, quantity: number, size?: string, color?: string, variationId?: string) => {
+    const uniqueKey = variationId ? `${productId}-${variationId}` : `${productId}-${size}-${color}`
+    const existingItem = cart.find(item => {
+      const itemKey = item.variationId ? `${item.productId}-${item.variationId}` : `${item.productId}-${item.size}-${item.color}`
+      return itemKey === uniqueKey
+    })
 
     if (existingItem) {
-      setCart(cart.map(item => 
-        item.productId === productId && item.size === size && item.color === color
+      setCart(cart.map(item => {
+        const itemKey = item.variationId ? `${item.productId}-${item.variationId}` : `${item.productId}-${item.size}-${item.color}`
+        return itemKey === uniqueKey
           ? { ...item, quantity: item.quantity + quantity }
           : item
-      ))
+      }))
     } else {
-      setCart([...cart, { productId, quantity, size, color }])
+      setCart([...cart, { productId, variationId, quantity, size, color }])
     }
   }
 
@@ -81,7 +85,7 @@ export default function PublicOrderForm() {
         <div className="text-center mb-8 relative">
           <div className="flex items-center justify-center gap-4 mb-4">
             <img 
-              src="/logo.png" 
+              src="/pedidos/logo.png" 
               alt="CT VEIGA TEAM" 
               className="w-24 h-24 object-contain"
             />

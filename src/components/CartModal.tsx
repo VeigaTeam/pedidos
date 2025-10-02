@@ -9,9 +9,10 @@ import { z } from 'zod'
 import { useToast } from '@/hooks/use-toast'
 import { useOrders } from '@/hooks/supabase/useOrders'
 import { useProducts } from '@/hooks/supabase/useProducts'
-import { ShoppingCart, X, Plus, Minus, Trash2, User } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
-import type { Product } from '@/types'
+import { PaymentMethodModal } from '@/components/Payment'
+import { ShoppingCart, X, Plus, Minus, Trash2, User, CreditCard } from 'lucide-react'
+import { formatCurrency, formatPhone, cleanPhone } from '@/lib/utils'
+import type { Product, PaymentResult, ProductVariation } from '@/types'
 
 const orderSchema = z.object({
   studentName: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -22,9 +23,10 @@ const orderSchema = z.object({
 
 interface CartItem {
   productId: string
+  variationId?: string // Referência à variação específica
   quantity: number
-  size?: string
-  color?: string
+  size?: string // Compatibilidade com sistema antigo
+  color?: string // Compatibilidade com sistema antigo
 }
 
 interface CartModalProps {
@@ -45,6 +47,8 @@ export function CartModal({
   onUpdateQuantity 
 }: CartModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] = useState(false)
+  const [currentOrderId, setCurrentOrderId] = useState<string>('')
   const { toast } = useToast()
   const { createOrder } = useOrders()
   const { products } = useProducts()
@@ -53,7 +57,8 @@ export function CartModal({
     register,
     handleSubmit,
     formState: { errors },
-    reset
+    reset,
+    setValue
   } = useForm({
     resolver: zodResolver(orderSchema),
     defaultValues: {
@@ -68,10 +73,26 @@ export function CartModal({
     return products.find(p => p.id === id)
   }
 
+  const getVariationById = (productId: string, variationId: string): ProductVariation | undefined => {
+    const product = products.find(p => p.id === productId) as any
+    if (!product?.variations) return undefined
+    return product.variations.find((v: ProductVariation) => v.id === variationId)
+  }
+
   const getTotalPrice = () => {
     return cart.reduce((total, item) => {
-      const product = getProductById(item.productId)
-      const price = product ? (product.isOffer && product.offerPrice ? product.offerPrice : product.salePrice) : 0
+      let price = 0
+      
+      if (item.variationId) {
+        // Usar preço da variação
+        const variation = getVariationById(item.productId, item.variationId)
+        price = variation?.salePrice || 0
+      } else {
+        // Usar preço do produto (sistema antigo)
+        const product = getProductById(item.productId)
+        price = product ? (product.isOffer && product.offerPrice ? product.offerPrice : product.salePrice) : 0
+      }
+      
       return total + (price * item.quantity)
     }, 0)
   }
@@ -92,9 +113,21 @@ export function CartModal({
         const product = getProductById(item.productId)
         if (!product) throw new Error(`Produto não encontrado: ${item.productId}`)
         
-        const price = product.isOffer && product.offerPrice ? product.offerPrice : product.salePrice
+        let price: number
+        let variation: ProductVariation | undefined
+
+        // Determinar preço baseado na variação ou produto
+        if (item.variationId) {
+          variation = getVariationById(item.productId, item.variationId)
+          if (!variation) throw new Error(`Variação não encontrada: ${item.variationId}`)
+          price = variation.salePrice || product.salePrice
+        } else {
+          price = product.isOffer && product.offerPrice ? product.offerPrice : product.salePrice
+        }
+
         return {
           productId: item.productId,
+          variationId: item.variationId,
           quantity: item.quantity,
           unitPrice: price,
           totalPrice: price * item.quantity,
@@ -106,7 +139,7 @@ export function CartModal({
             category: product.category,
             description: product.description,
             purchasePrice: product.purchasePrice,
-            salePrice: product.isOffer && product.offerPrice ? product.offerPrice : product.salePrice,
+            salePrice: price,
             profitMargin: product.profitMargin,
             stock: product.stock,
             minStock: product.minStock,
@@ -123,24 +156,18 @@ export function CartModal({
       const orderData = {
         studentName: data.studentName,
         studentEmail: data.studentEmail,
-        studentPhone: data.studentPhone,
+        studentPhone: cleanPhone(data.studentPhone),
         totalAmount: getTotalPrice(),
         items: orderItems,
         notes: data.notes || '',
         status: 'pending' as const
       }
 
-      await createOrder(orderData)
+      const order = await createOrder(orderData)
       
-      toast({
-        title: "Pedido realizado!",
-        description: "Seu pedido foi enviado com sucesso. Em breve entraremos em contato.",
-      })
-
-      // Limpar carrinho e fechar modal
-      onUpdateCart([])
-      reset()
-      onClose()
+      // Abrir modal de pagamento
+      setCurrentOrderId(order.id)
+      setIsPaymentMethodModalOpen(true)
 
     } catch (error) {
       console.error('Erro ao criar pedido:', error)
@@ -151,6 +178,21 @@ export function CartModal({
       })
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handlePaymentSuccess = (result: PaymentResult) => {
+    if (result.success) {
+      toast({
+        title: "Pedido realizado com sucesso!",
+        description: "Seu pedido foi processado e o pagamento foi aprovado.",
+      })
+
+      // Limpar carrinho e fechar modais
+      onUpdateCart([])
+      reset()
+      setIsPaymentMethodModalOpen(false)
+      onClose()
     }
   }
 
@@ -195,15 +237,37 @@ export function CartModal({
                   const product = getProductById(item.productId)
                   if (!product) return null
 
+                  const variation = item.variationId ? getVariationById(item.productId, item.variationId) : undefined
+                  const currentPrice = variation?.salePrice || (product.isOffer && product.offerPrice ? product.offerPrice : product.salePrice)
+                  const productImage = variation?.image || product.image
+                  const uniqueKey = item.variationId ? `${item.productId}-${item.variationId}` : `${item.productId}-${item.size}-${item.color}`
+
+                  // Construir informações da variação
+                  const variationInfo = []
+                  if (variation) {
+                    Object.entries(variation.attributes).forEach(([key, value]) => {
+                      const attrInfo = variation.attributeValues?.find(av => av.value === value)
+                      const displayValue = attrInfo?.displayValue || value
+                      const attrName = key === 'size' ? 'Tamanho' : 
+                                      key === 'color' ? 'Cor' :
+                                      key === 'material' ? 'Material' : key
+                      variationInfo.push(`${attrName}: ${displayValue}`)
+                    })
+                  } else {
+                    // Sistema antigo
+                    if (item.size) variationInfo.push(`Tamanho: ${item.size}`)
+                    if (item.color) variationInfo.push(`Cor: ${item.color}`)
+                  }
+
                   return (
-                    <Card key={`${item.productId}-${item.size}-${item.color}`} className="border-0 shadow-sm">
+                    <Card key={uniqueKey} className="border-0 shadow-sm">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-4">
                           {/* Imagem do produto */}
                           <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            {product.image ? (
+                            {productImage ? (
                               <img
-                                src={product.image}
+                                src={productImage}
                                 alt={product.name}
                                 className="w-full h-full object-cover rounded-lg"
                               />
@@ -215,12 +279,15 @@ export function CartModal({
                           {/* Informações do produto */}
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-gray-900 truncate">{product.name}</h4>
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              {item.size && <span>Tamanho: {item.size}</span>}
-                              {item.color && <span>Cor: {item.color}</span>}
-                            </div>
+                            {variationInfo.length > 0 && (
+                              <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+                                {variationInfo.map((info, idx) => (
+                                  <span key={idx}>{info}</span>
+                                ))}
+                              </div>
+                            )}
                             <p className="text-lg font-bold text-red-600">
-                              {formatCurrency(product.isOffer && product.offerPrice ? product.offerPrice : product.salePrice)}
+                              {formatCurrency(currentPrice)}
                             </p>
                           </div>
 
@@ -249,7 +316,7 @@ export function CartModal({
                           {/* Preço total do item */}
                           <div className="text-right">
                             <p className="font-bold text-lg text-gray-900">
-                              {formatCurrency((product.isOffer && product.offerPrice ? product.offerPrice : product.salePrice) * item.quantity)}
+                              {formatCurrency(currentPrice * item.quantity)}
                             </p>
                           </div>
 
@@ -336,8 +403,13 @@ export function CartModal({
                         <Input
                           id="studentPhone"
                           {...register('studentPhone')}
+                          onChange={(e) => {
+                            const formatted = formatPhone(e.target.value)
+                            setValue('studentPhone', formatted)
+                          }}
                           placeholder="(11) 99999-9999"
                           className="mt-1"
+                          maxLength={15}
                         />
                         {errors.studentPhone && (
                           <p className="text-red-600 text-sm mt-1">{errors.studentPhone.message}</p>
@@ -366,8 +438,8 @@ export function CartModal({
                           </>
                         ) : (
                           <>
-                            <ShoppingCart className="w-5 h-5 mr-2" />
-                            Finalizar Pedido
+                            <CreditCard className="w-5 h-5 mr-2" />
+                            Finalizar e Pagar
                           </>
                         )}
                       </Button>
@@ -379,6 +451,15 @@ export function CartModal({
           )}
         </div>
       </div>
+
+      {/* Modal de Método de Pagamento */}
+      <PaymentMethodModal
+        isOpen={isPaymentMethodModalOpen}
+        onClose={() => setIsPaymentMethodModalOpen(false)}
+        orderId={currentOrderId}
+        amount={getTotalPrice()}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </div>
   )
 }

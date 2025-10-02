@@ -98,7 +98,7 @@ VITE_DATABASE_URL=postgresql://user:password@localhost:5432/pedidos_db
 
 ### Personalização
 - **Cores**: Edite `tailwind.config.ts`
-- **Produtos**: Modifique `src/data/mockData.ts`
+- **Produtos**: Adicione produtos através da interface administrativa
 - **Layout**: Ajuste componentes em `src/components/Layout/`
 
 ## 📊 Funcionalidades Principais
